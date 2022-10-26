@@ -11,9 +11,9 @@ inThisBuild(
     organization               := "com.indoorvivants",
     organizationName           := "Anton Sviridov",
     homepage := Some(
-      url("https://github.com/indoorvivants/scala-library-template")
+      url("https://github.com/indoorvivants/rendition")
     ),
-    startYear := Some(2020),
+    startYear := Some(2022),
     licenses := List(
       "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
     ),
@@ -58,7 +58,8 @@ lazy val core = projectMatrix
   .in(file("modules/core"))
   .defaultAxes(defaults*)
   .settings(
-    name := "core",
+    name       := "rendition",
+    moduleName := "rendition",
     Test / scalacOptions ~= filterConsoleScalacOptions
   )
   .settings(munitSettings)
