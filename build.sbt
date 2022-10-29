@@ -68,7 +68,8 @@ lazy val core = projectMatrix
   .nativePlatform(Versions.scalaVersions, disableDependencyChecks)
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    buildInfoPackage := "com.indoorvivants.library.internal",
+    buildInfoPackage := "rendition",
+    buildInfoOptions += BuildInfoOption.PackagePrivate,
     buildInfoKeys := Seq[BuildInfoKey](
       version,
       scalaVersion,
