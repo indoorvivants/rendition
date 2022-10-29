@@ -17,29 +17,72 @@
 package rendition
 
 import Rendering.Config
-import IndentationSize.*
+
+enum Separator:
+  case Newline(s: String)
+  case Append(s: String)
 
 case class Rendering(to: LineBuilder, c: Config):
-  opaque type PrivateC = Config
+  opaque type Context = Config
 
-  inline def indent(using c: PrivateC): String =
+  inline def indent(using c: Context): String =
     (" " * (c.indentSize.value * c.indents.value))
 
-  inline def nest(f: PrivateC ?=> Unit)(using config: PrivateC = c) =
-    f(using config.copy(indents = config.indents.map(_ + 1)))
+  inline def nest(f: Context ?=> Unit)(using context: Context = c) =
+    f(using context.copy(indents = context.indents.map(_ + 1)))
 
-  inline def deep(count: Int)(f: PrivateC ?=> Unit)(using
-      config: PrivateC = c
+  inline def deep(count: Int)(f: Context ?=> Unit)(using
+      context: Context = c
   ) =
-    f(using config.copy(indents = config.indents.map(_ + count)))
+    f(using context.copy(indents = context.indents.map(_ + count)))
 
-  inline def line(n: String)(using config: PrivateC = c) =
-    to.appendLine(indent(using config) + n)
+  inline def line(n: String)(using context: Context = c) =
+    to.appendLine(indent(using context) + n)
 
-  inline def forkRendering(using config: PrivateC = c) = Rendering(to, config)
+  inline def emptyLine()(using context: Context = c) =
+    line("")
+
+  inline def forkRendering(using context: Context = c) = Rendering(to, context)
+
+  inline def block(start: String, end: String)(f: Context ?=> Unit)(using
+      context: Context = c
+  ) =
+    line(start)
+    nest { f }
+    line(end)
+
+  inline def intersperse(
+      separator: Separator
+  )(iterator: Seq[String])(using ctx: Context = c) =
+    if iterator.size < 2 then iterator.foreach(line(_))
+    else
+      var separators = iterator.size - 1
+      iterator.foreach { str =>
+        separator match
+          case Separator.Newline(s) =>
+            line(str)
+            if separators > 0 then
+              line(s)
+              separators -= 1
+          case Separator.Append(s) =>
+            if separators > 0 then
+              line(str + s)
+              separators -= 1
+            else line(str)
+
+      }
 end Rendering
 
 object Rendering:
   case class Config(indents: Indentation, indentSize: IndentationSize)
   object Config:
     val default = Config(Indentation(0), IndentationSize(2))
+
+  opaque type IndentationSize = Int
+  object IndentationSize extends OpaqueNum[IndentationSize]
+
+  opaque type Indentation = Int
+  object Indentation extends OpaqueNum[Indentation]
+
+  import IndentationSize.*
+end Rendering

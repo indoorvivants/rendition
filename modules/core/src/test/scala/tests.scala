@@ -14,6 +14,10 @@ class Tests extends munit.FunSuite:
           line("val x = 25")
         }
         line("def t = 5")
+        block("given Test =", "end") {
+          line("def x = 1")
+        }
+
       }
     }
 
@@ -23,9 +27,55 @@ class Tests extends munit.FunSuite:
       |  def hello = 
       |    val x = 25
       |  def t = 5
+      |  given Test =
+      |    def x = 1
+      |  end
       """.trim.stripMargin
 
     assertEquals(expected, lb.result.trim)
+  }
+
+  test("intersperse") {
+    val lb = LineBuilder()
+    lb.render { r =>
+      import r.*
+
+      val definitions = List.tabulate(5)(i => s"val test$i = $i")
+      val arguments   = List.tabulate(5)(i => s"x$i: String")
+
+      block("object hello:", "end hello") {
+        intersperse(Separator.Newline("// test"))(definitions)
+      }
+
+      block("def function(", ") = ???") {
+        intersperse(Separator.Append(","))(arguments)
+      }
+
+    }
+
+    val expected = """
+    |object hello:
+    |  val test0 = 0
+    |  // test
+    |  val test1 = 1
+    |  // test
+    |  val test2 = 2
+    |  // test
+    |  val test3 = 3
+    |  // test
+    |  val test4 = 4
+    |end hello
+    |def function(
+    |  x0: String,
+    |  x1: String,
+    |  x2: String,
+    |  x3: String,
+    |  x4: String
+    |) = ???
+    """.stripMargin.trim
+
+    assertEquals(lb.result.trim, expected)
+
   }
 
   /** Forking is useful when you want to extract part of the rendering logic

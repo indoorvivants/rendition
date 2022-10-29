@@ -41,11 +41,3 @@ object LineBuilder:
       lb
   end extension
 end LineBuilder
-
-opaque type IndentationSize = Int
-object IndentationSize extends OpaqueNum[IndentationSize]
-
-opaque type Indentation = Int
-object Indentation extends OpaqueNum[Indentation]
-
-import IndentationSize.*

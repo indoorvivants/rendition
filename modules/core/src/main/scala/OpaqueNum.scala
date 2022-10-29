@@ -17,7 +17,6 @@
 package rendition
 
 import Rendering.Config
-import IndentationSize.*
 
 private[rendition] trait OpaqueNum[T](using T =:= Int):
   inline def apply(i: Int): T = i.asInstanceOf[T]
