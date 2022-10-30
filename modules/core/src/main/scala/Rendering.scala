@@ -27,7 +27,39 @@ case class Rendering(to: LineBuilder, c: Config):
     * a particular instance of Rendering - to make sure that two different
     * renderings don't overlap
     */
-  opaque type Context = Config
+  opaque type Context <: Config = Config
+
+  /** Use this [[Rendering]] object - places the required context in the given
+    * scope for methods such as line, block, deep, etc. to actually work.
+    *
+    * If there's already a rendering context in scope, this method will inherit
+    * it, maintaining the nesting level. Otherwise it will start at the
+    * indentation level associated with this instance of [[Rendering]]
+    *
+    * @param f
+    *   rendering block
+    * @param ctx
+    *   rendering context, defaults to the one associated with this Rendering
+    *   instance
+    * @return
+    */
+  inline def use(f: Context ?=> Unit)(using ctx: Context = c) =
+    f(using ctx)
+    this
+  end use
+
+  /** Renders the block at the indentation level originally associated with this
+    * Rendering instance. What it means is that no matter how many levels of
+    * nest {..} you are in, they will all be ignored.
+    *
+    * @param f
+    *   rendering block
+    * @return
+    */
+  inline def reset(f: Context ?=> Unit): Rendering =
+    f(using c)
+    this
+  end reset
 
   /** Returns the indentation whitespace at the current nesting level. This
     * method does not modify the contents of the LineBuilder
@@ -47,7 +79,7 @@ case class Rendering(to: LineBuilder, c: Config):
     *   current rendering context
     * @return
     */
-  inline def nest(f: Context ?=> Unit)(using context: Context = c): Rendering =
+  inline def nest(f: Context ?=> Unit)(using context: Context): Rendering =
     f(using context.copy(indents = context.indents.map(_ + 1)))
     this
   end nest
@@ -63,7 +95,7 @@ case class Rendering(to: LineBuilder, c: Config):
     * @return
     */
   inline def deep(count: Int)(f: Context ?=> Unit)(using
-      context: Context = c
+      context: Context
   ): Rendering =
     f(using context.copy(indents = context.indents.map(_ + count)))
     this
@@ -78,7 +110,7 @@ case class Rendering(to: LineBuilder, c: Config):
     *   current rendering context
     * @return
     */
-  inline def line(str: String)(using context: Context = c): Rendering =
+  inline def line(str: String)(using context: Context): Rendering =
     to.appendLine(indent(using context) + str)
     this
   end line
@@ -100,7 +132,7 @@ case class Rendering(to: LineBuilder, c: Config):
     * @param context
     * @return
     */
-  inline def forkRendering(using context: Context = c): Rendering =
+  inline def forkRendering(using context: Context): Rendering =
     Rendering(to, context)
 
   /** Creates a block, where `start` and `end` will be rendered as separate
@@ -117,7 +149,7 @@ case class Rendering(to: LineBuilder, c: Config):
     * @return
     */
   inline def block(start: String, end: String)(f: Context ?=> Unit)(using
-      context: Context = c
+      context: Context
   ): Rendering =
     line(start)
     nest { f }
@@ -140,11 +172,11 @@ case class Rendering(to: LineBuilder, c: Config):
     */
   inline def intersperse(
       separator: Separator
-  )(items: Seq[String])(using ctx: Context = c): Rendering =
+  )(items: Seq[String])(using ctx: Context): Rendering =
     if items.size < 2 then items.foreach(line(_))
     else
       var separators = items.size - 1
-      val onEach =
+      val onEach: String => Unit =
         separator match
           case Separator.Newline(s) =>
             (str: String) =>
@@ -160,9 +192,7 @@ case class Rendering(to: LineBuilder, c: Config):
                 separators -= 1
               else line(str)
 
-      items.foreach { str =>
-        onEach(str)
-      }
+      items.foreach(onEach)
     end if
     this
   end intersperse

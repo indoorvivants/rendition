@@ -1,4 +1,7 @@
 import rendition.*
+import scala.util.NotGiven.apply
+import scala.util.NotGiven
+import scala.annotation.implicitNotFound
 
 class Tests extends munit.FunSuite:
   test("general usage") {
@@ -7,17 +10,24 @@ class Tests extends munit.FunSuite:
     lb.render { r =>
       import r.*
 
-      line("object hello:")
-      nest {
-        line("def hello = ")
-        nest {
-          line("val x = 25")
-        }
-        line("def t = 5")
-        block("given Test =", "end") {
-          line("def x = 1")
-        }
+      r.use {
 
+        line("object hello:")
+        nest {
+          line("def hello = ")
+          nest {
+            line("val x = 25")
+          }
+          line("def t = 5")
+          block("given Test =", "end") {
+            line("def x = 1")
+          }
+
+          reset {
+            line("println(25)")
+          }
+
+        }
       }
     }
 
@@ -30,9 +40,10 @@ class Tests extends munit.FunSuite:
       |  given Test =
       |    def x = 1
       |  end
+      |println(25)
       """.trim.stripMargin
 
-    assertEquals(expected, lb.result.trim)
+    assertEquals(lb.result.trim, expected)
   }
 
   test("intersperse") {
@@ -43,12 +54,14 @@ class Tests extends munit.FunSuite:
       val definitions = List.tabulate(5)(i => s"val test$i = $i")
       val arguments   = List.tabulate(5)(i => s"x$i: String")
 
-      block("object hello:", "end hello") {
-        intersperse(Separator.Newline("// test"))(definitions)
-      }
+      r.use {
+        block("object hello:", "end hello") {
+          intersperse(Separator.Newline("// test"))(definitions)
+        }
 
-      block("def function(", ") = ???") {
-        intersperse(Separator.Append(","))(arguments)
+        block("def function(", ") = ???") {
+          intersperse(Separator.Append(","))(arguments)
+        }
       }
 
     }
@@ -86,17 +99,21 @@ class Tests extends munit.FunSuite:
     val lb = LineBuilder()
 
     def f(r: Rendering) =
-      r.line("I come from a function!")
-      r.nest { r.line("and me") }
+      r.use {
+        r.line("I come from a function!")
+        r.nest { r.line("and me") }
+      }
 
     lb.render { r =>
       import r.*
 
-      line("object hello:")
-      nest {
-        line("object test:")
+      r.use {
+        line("object hello:")
         nest {
-          f(forkRendering)
+          line("object test:")
+          nest {
+            f(forkRendering)
+          }
         }
       }
     }
@@ -117,17 +134,21 @@ class Tests extends munit.FunSuite:
     val r1 = lb.rendering()
     val r2 = lb.rendering()
 
-    r1.nest {
-      r2.line("r2 hello")
-      r1.line("r1 hello")
-      r2.nest {
-        r2.line("r2 bye")
-        r1.line("r1 bye")
+    r1.use {
+      r2.use {
+        r1.nest {
+          r2.line("r2 hello")
+          r1.line("r1 hello")
+          r2.nest {
+            r2.line("r2 bye")
+            r1.line("r1 bye")
+          }
+        }
+
+        r1.line("yo1")
+        r2.line("yo2")
       }
     }
-
-    r1.line("yo1")
-    r2.line("yo2")
 
     val expected =
       """
@@ -148,19 +169,23 @@ class Tests extends munit.FunSuite:
 
     lb1.render { r =>
       import r.*
-      line("test")
-      r.deep(3) {
-        line("hello")
+      use {
+        line("test")
+        deep(3) {
+          line("hello")
+        }
       }
     }
 
     lb2.render { r =>
       import r.*
-      line("test")
-      nest {
+      use {
+        line("test")
         nest {
           nest {
-            line("hello")
+            nest {
+              line("hello")
+            }
           }
         }
       }

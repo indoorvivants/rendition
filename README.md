@@ -8,13 +8,19 @@ val lb = LineBuilder()
 lb.render {r => 
   import r.*
 
-  line("object test:")
-  nest {
-    line("def hello = ")
+  use {
+    line("object test:")
     nest {
-      line("val x = 25")
+      line("def hello = ")
+      nest {
+        line("val x = 25")
+        reset { line("// top level!") }
+        deep(4) {
+          line("// super nested")
+        }
+      }
+      line("def test = 5")
     }
-    line("def test = 5")
   }
 }
 
@@ -23,6 +29,8 @@ val expected =
 |object test:
 |  def hello = 
 |    val x = 25
+|// top level!
+|            // super nested
 |  def test = 5
 """.stripMargin.trim
 
