@@ -132,7 +132,7 @@ case class Rendering(to: LineBuilder, c: Config):
     * @param context
     * @return
     */
-  inline def forkRendering(using context: Context): Rendering =
+  inline def forkRendering(using context: Context = c): Rendering =
     Rendering(to, context)
 
   /** Creates a block, where `start` and `end` will be rendered as separate
