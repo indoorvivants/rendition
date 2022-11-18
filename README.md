@@ -1,3 +1,5 @@
+### This library is not really designed to be used by anyone other than me but I'm too cheap to pay (even more) for private github actions minutes
+
 Rendition is a micro library intended to be replace basically the same code in projects like [sn-bindgen](https://sn-bindgen.indoorvivants.com/) and [langoustine](https://github.com/neandertech/langoustine/)
 
 ```scala mdoc
