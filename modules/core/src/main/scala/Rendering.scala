@@ -92,6 +92,9 @@ inline def deep(
   )
 end deep
 
+inline def append(what: LineBuilder)(using RenderingContext) =
+  to.append(what)
+
 /** Writes a line to the builder indented to the correct number of spaces
   * (depending on config and nesting)
   *

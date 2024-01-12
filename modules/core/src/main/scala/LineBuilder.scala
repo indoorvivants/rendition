@@ -36,7 +36,7 @@ object LineBuilder:
     def renderContext(config: Config = Config.default) =
       RenderingContext(lb, config, config)
 
-    def use(f: RenderingContext ?=> Unit): Unit =
+    def use[T](f: RenderingContext ?=> T): T =
       f(using renderContext())
 
   end extension
