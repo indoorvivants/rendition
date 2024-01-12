@@ -4,7 +4,6 @@ Global / excludeLintKeys += scalaJSLinkerConfig
 
 inThisBuild(
   List(
-    scalafixDependencies += "com.github.liancheng" %% "organize-imports" % Versions.organizeImports,
     semanticdbEnabled          := true,
     semanticdbVersion          := scalafixSemanticdb.revision,
     scalafixScalaBinaryVersion := scalaBinaryVersion.value,
@@ -29,7 +28,7 @@ inThisBuild(
 )
 
 val Versions = new {
-  val Scala3          = "3.2.0"
+  val Scala3          = "3.3.1"
   val munit           = "1.0.0-M6"
   val organizeImports = "0.6.0"
   val scalaVersions   = Seq(Scala3)

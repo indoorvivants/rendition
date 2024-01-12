@@ -2,32 +2,29 @@ import rendition.*
 import scala.util.NotGiven.apply
 import scala.util.NotGiven
 import scala.annotation.implicitNotFound
+import scala.util.boundary, boundary.break
 
 class Tests extends munit.FunSuite:
   test("general usage") {
     val lb = LineBuilder()
 
-    lb.render { r =>
-      import r.*
+    lb.use {
 
-      r.use {
-
-        line("object hello:")
+      line("object hello:")
+      nest {
+        line("def hello = ")
         nest {
-          line("def hello = ")
-          nest {
-            line("val x = 25")
-          }
-          line("def t = 5")
-          block("given Test =", "end") {
-            line("def x = 1")
-          }
-
-          reset {
-            line("println(25)")
-          }
-
+          line("val x = 25")
         }
+        line("def t = 5")
+        block("given Test =", "end") {
+          line("def x = 1")
+        }
+
+        withReset {
+          line("println(25)")
+        }
+
       }
     }
 
@@ -48,20 +45,17 @@ class Tests extends munit.FunSuite:
 
   test("intersperse") {
     val lb = LineBuilder()
-    lb.render { r =>
-      import r.*
+    lb.use {
 
       val definitions = List.tabulate(5)(i => s"val test$i = $i")
       val arguments   = List.tabulate(5)(i => s"x$i: String")
 
-      r.use {
-        block("object hello:", "end hello") {
-          intersperse(Separator.Newline("// test"))(definitions)
-        }
+      block("object hello:", "end hello") {
+        intersperse(Separator.Newline("// test"))(definitions)
+      }
 
-        block("def function(", ") = ???") {
-          intersperse(Separator.Append(","))(arguments)
-        }
+      block("def function(", ") = ???") {
+        intersperse(Separator.Append(","))(arguments)
       }
 
     }
@@ -98,22 +92,16 @@ class Tests extends munit.FunSuite:
 
     val lb = LineBuilder()
 
-    def f(r: Rendering) =
-      r.use {
-        r.line("I come from a function!")
-        r.nest { r.line("and me") }
-      }
+    def f(using RenderingContext) =
+      line("I come from a function!")
+      nest { line("and me") }
 
-    lb.render { r =>
-      import r.*
-
-      r.use {
-        line("object hello:")
+    lb.use {
+      line("object hello:")
+      nest {
+        line("object test:")
         nest {
-          line("object test:")
-          nest {
-            f(forkRendering)
-          }
+          f
         }
       }
     }
@@ -129,68 +117,67 @@ class Tests extends munit.FunSuite:
     assertEquals(lb.result.trim, expected)
   }
 
-  test("different instances of rendering don't inherit nesting") {
-    val lb = LineBuilder()
-    val r1 = lb.rendering()
-    val r2 = lb.rendering()
-
-    r1.use {
-      r2.use {
-        r1.nest {
-          r2.line("r2 hello")
-          r1.line("r1 hello")
-          r2.nest {
-            r2.line("r2 bye")
-            r1.line("r1 bye")
-          }
-        }
-
-        r1.line("yo1")
-        r2.line("yo2")
-      }
-    }
-
-    val expected =
-      """
-      |r2 hello
-      |  r1 hello
-      |  r2 bye
-      |  r1 bye
-      |yo1
-      |yo2
-      """.trim.stripMargin
-
-    assertEquals(lb.result.trim, expected)
-  }
-
   test("deep nesting") {
     val lb1 = LineBuilder()
     val lb2 = LineBuilder()
 
-    lb1.render { r =>
-      import r.*
-      use {
-        line("test")
-        deep(3) {
-          line("hello")
-        }
+    lb1.use {
+      line("test")
+      deep(3) {
+        line("hello")
       }
     }
 
-    lb2.render { r =>
-      import r.*
-      use {
-        line("test")
+    lb2.use {
+      line("test")
+      nest {
         nest {
           nest {
-            nest {
-              line("hello")
-            }
+            line("hello")
           }
         }
       }
     }
 
     assertEquals(lb1.result, lb2.result)
+  }
+
+  test("transaction") {
+    val lb1 = LineBuilder()
+
+    var capturedError = Option.empty[String]
+
+    lb1.use:
+      line("Hello")
+      line("World")
+      nest:
+        capturedError = transact[String]:
+          line("start")
+          break(Outcome.Fail("oopsie daisy"))
+          line("end")
+          Outcome.Ok
+
+        transact[String]:
+          line("ok")
+          line("now")
+          nest:
+            line("go")
+          Outcome.Ok
+      line("home")
+
+    assertEquals(Some("oopsie daisy"), capturedError)
+
+    val expected =
+      """
+      |Hello
+      |World
+      |  ok
+      |  now
+      |    go
+      |home
+      """.stripMargin.trim
+
+    assertEquals(expected, lb1.result.trim)
+
   }
 end Tests

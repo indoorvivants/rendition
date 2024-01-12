@@ -7,23 +7,19 @@ import rendition._
 
 val lb = LineBuilder()
 
-lb.render {r => 
-  import r.*
-
-  use {
+lb.use {
     line("object test:")
     nest {
       line("def hello = ")
       nest {
         line("val x = 25")
-        reset { line("// top level!") }
+        withReset { line("// top level!") }
         deep(4) {
           line("// super nested")
         }
       }
       line("def test = 5")
     }
-  }
 }
 
 val expected = 

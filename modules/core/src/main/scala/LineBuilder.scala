@@ -30,14 +30,14 @@ object LineBuilder:
     def emptyLine(): LineBuilder           = lb.append(SEP)
     def emptyLines(n: Int): LineBuilder    = lb.append(SEP * n)
     def append(s: String): LineBuilder     = lb.append(s)
+    def append(other: LineBuilder) =
+      lb.append(other)
 
-    def rendering(
-        c: Config = Config.default
-    ): Rendering =
-      Rendering(lb, c)
+    def renderContext(config: Config = Config.default) =
+      RenderingContext(lb, config, config)
 
-    def render(f: Rendering => Unit, c: Config = Config.default): LineBuilder =
-      f(rendering(c))
-      lb
+    def use(f: RenderingContext ?=> Unit): Unit =
+      f(using renderContext())
+
   end extension
 end LineBuilder
