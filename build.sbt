@@ -97,7 +97,7 @@ val noPublish = Seq(
   publishLocal / skip := true
 )
 
-val defaults = Seq(VirtualAxis.scalaABIVersion("3.2.0"), VirtualAxis.jvm)
+val defaults = Seq(VirtualAxis.scalaABIVersion("3.3.1"), VirtualAxis.jvm)
 
 val scalafixRules = Seq(
   "OrganizeImports",

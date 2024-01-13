@@ -153,16 +153,14 @@ class Tests extends munit.FunSuite:
       nest:
         capturedError = transact[String]:
           line("start")
-          break(Outcome.Fail("oopsie daisy"))
+          break("oopsie daisy")
           line("end")
-          Outcome.Ok
 
         transact[String]:
           line("ok")
           line("now")
           nest:
             line("go")
-          Outcome.Ok
       line("home")
 
     assertEquals(Some("oopsie daisy"), capturedError)

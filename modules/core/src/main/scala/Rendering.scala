@@ -120,22 +120,22 @@ inline def emptyLine()(using RenderingContext) =
   * @param context
   * @return
   */
-inline def transact[A](
-    f: Label[Outcome[A]] ?=> RenderingContext ?=> Outcome[A]
+def transact[A](
+    f: Label[A] ?=> RenderingContext ?=> Unit
 )(using RenderingContext): Option[A] =
   val temp   = LineBuilder()
   val forked = context.copy(to = temp)
   val result =
-    boundary:
+    boundary[A | Unit]:
       given RenderingContext = forked
       f
 
   result match
-    case Outcome.Ok =>
+    case () =>
       to.append(temp)
       None
-    case Outcome.Fail(reason) =>
-      Some(reason)
+    case other =>
+      Some(other.asInstanceOf[A])
 end transact
 
 /** Creates a block, where `start` and `end` will be rendered as separate lines
@@ -153,7 +153,7 @@ end transact
   */
 inline def block(start: String, end: String)(f: RenderingContext ?=> Unit)(using
     RenderingContext
-) =
+): LineBuilder =
   line(start)
   nest { f }
   line(end)
@@ -172,7 +172,7 @@ end block
   * @param ctx
   * @return
   */
-inline def intersperse(
+def intersperse(
     separator: Separator
 )(items: Seq[String])(using RenderingContext) =
   if items.size < 2 then items.foreach(line(_))
