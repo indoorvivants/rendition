@@ -210,12 +210,3 @@ object Rendering:
   opaque type Indentation = Int
   object Indentation extends OpaqueNum[Indentation]
 end Rendering
-
-enum Outcome[+A]:
-  case Ok
-  case Fail(reason: A)
-
-  def hoist(using Label[A]): Unit = this match
-    case Ok => ()
-    case Fail(reason) =>
-      boundary.break(reason)
